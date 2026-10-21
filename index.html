@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Миний Амьдрал & TOPIK 1 Академи</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue.js 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen pb-12 font-sans">
+    <div id="app" class="max-w-7xl mx-auto px-4 py-6">
+        
+        <!-- HEADER & APP NAVIGATION -->
+        <header class="flex flex-col lg:flex-row justify-between items-center mb-8 border-b border-slate-700 pb-6 gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold text-indigo-400 flex items-center gap-3">
+                    <i class="fa-solid fa-crown text-amber-400"></i> My Life & Learning Hub
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Амьдралын хэв маяг, зорилго ба TOPIK 1 Солонгос хэлний цогц систем</p>
+            </div>
+            
+            <!-- Үндсэн Цэснүүд -->
+            <div class="flex flex-wrap gap-2 bg-slate-800 p-1.5 rounded-2xl border border-slate-700">
+                <button @click="activeTab = 'tracker'" :class="activeTab === 'tracker' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'" class="px-4 py-2 rounded-xl font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-check"></i> Дадал Хянагч
+                </button>
+                <button @click="activeTab = 'topik_vocab'" :class="activeTab === 'topik_vocab' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'" class="px-4 py-2 rounded-xl font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-book"></i> TOPIK 1 Үгс
+                </button>
+                <button @click="activeTab = 'topik_grammar'" :class="activeTab === 'topik_grammar' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'" class="px-4 py-2 rounded-xl font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group"></i> Грамматик
+                </button>
+                <button @click="startQuiz" :class="activeTab === 'topik_quiz'" :class="activeTab === 'topik_quiz' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'" class="px-4 py-2 rounded-xl font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-graduation-cap"></i> Сорилт
+                </button>
+                <button @click="activeTab = 'timer'" :class="activeTab === 'timer' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white'" class="px-4 py-2 rounded-xl font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-clock"></i> Хичээлийн Таймер
+                </button>
+            </div>
+        </header>
+
+        <!-- ========================================== -->
+        <!-- TAB 1: ӨДРИЙН ДАДАЛ ХЯНАГЧ -->
+        <!-- ========================================== -->
+        <div v-if="activeTab === 'tracker'">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-indigo-300"><i class="fa-solid fa-list-check"></i> Сарын Дадал ба Зорилт</h2>
+                <input type="month" v-model="selectedMonth" @change="generateDays" class="bg-slate-800 border border-slate-700 text-white px-4 py-2 rounded-xl font-medium focus:outline-none">
+            </div>
+
+            <!-- Хуваарь (Босох/Унтах) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 bg-amber-500/10 text-amber-400 rounded-xl text-2xl"><i class="fa-solid fa-sun"></i></div>
+                        <div>
+                            <h3 class="text-slate-400 text-xs font-bold uppercase">Өглөө босох</h3>
+                            <p class="text-xl font-bold text-white">{{ schedule.wakeTime || 'Тохируулаагүй' }}</p>
+                        </div>
+                    </div>
+                    <input type="time" v-model="schedule.wakeTime" @change="saveSchedule" class="bg-slate-900 border border-slate-700 text-white px-3 py-1.5 rounded-xl focus:outline-none">
+                </div>
+
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl text-2xl"><i class="fa-solid fa-moon"></i></div>
+                        <div>
+                            <h3 class="text-slate-400 text-xs font-bold uppercase">Орой унтах</h3>
+                            <p class="text-xl font-bold text-white">{{ schedule.sleepTime || 'Тохируулаагүй' }}</p>
+                        </div>
+                    </div>
+                    <input type="time" v-model="schedule.sleepTime" @change="saveSchedule" class="bg-slate-900 border border-slate-700 text-white px-3 py-1.5 rounded-xl focus:outline-none">
+                </div>
+            </div>
+
+            <!-- Дадал Нэмэх -->
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg mb-8">
+                <form @submit.prevent="addHabit" class="flex flex-col md:flex-row gap-4">
+                    <input type="text" v-model="newHabitTitle" placeholder="Зорилгын нэр (Дээ: Хичээл хийх, Утасны хэрэглээ багасгах...)" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none" required>
+                    <select v-model="newHabitCategory" class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none">
+                        <option value="📚 Хичээл/Ажил">📚 Хичээл / Ажил</option>
+                        <option value="📱 Утасны хэрэглээ">📱 Утасны хэрэглээ</option>
+                        <option value="🎨 Чөлөөт цаг">🎨 Чөлөөт цаг</option>
+                        <option value="🏃 Эрүүл мэнд">🏃 Эрүүл мэнд</option>
+                    </select>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold transition">Нэмэх</button>
+                </form>
+            </div>
+
+            <!-- Хүснэгт -->
+            <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-lg overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[800px]">
+                    <thead>
+                        <tr class="bg-slate-900/80 border-b border-slate-700 text-slate-300 text-xs uppercase">
+                            <th class="p-4 w-64">Зорилго</th>
+                            <th class="p-4 w-36">Ангилал</th>
+                            <th v-for="day in daysInMonth" :key="day" class="p-2 text-center w-8 border-l border-slate-800">{{ day }}</th>
+                            <th class="p-4 text-center w-20 border-l border-slate-700">Ахиц</th>
+                            <th class="p-4 text-center w-12">Үйлдэл</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/50 text-sm">
+                        <tr v-for="habit in habits" :key="habit.id" class="hover:bg-slate-750/50 transition">
+                            <td class="p-4 font-medium">{{ habit.title }}</td>
+                            <td class="p-4"><span class="px-2.5 py-1 bg-slate-700 rounded-lg text-xs text-slate-300">{{ habit.category }}</span></td>
+                            <td v-for="day in daysInMonth" :key="day" class="p-1 text-center border-l border-slate-800 cursor-pointer hover:bg-slate-700/40" @click="toggleCheck(habit.id, day)">
+                                <span v-if="isChecked(habit.id, day)" class="text-emerald-400 font-bold">✅</span>
+                                <span v-else class="text-slate-600">·</span>
+                            </td>
+                            <td class="p-4 text-center border-l border-slate-700 font-bold text-indigo-400">{{ getHabitProgress(habit.id) }}%</td>
+                            <td class="p-4 text-center"><button @click="deleteHabit(habit.id)" class="text-slate-500 hover:text-rose-400"><i class="fa-solid fa-trash"></i></button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: TOPIK 1 VOCABULARY -->
+        <!-- ========================================== -->
+        <div v-if="activeTab === 'topik_vocab'">
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 mb-6">
+                <h3 class="text-lg font-bold mb-4 text-rose-300 flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i> Шинэ Солонгос Үг Нэмэх</h3>
+                <form @submit.prevent="addWord" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <input type="text" v-model="newKorean" placeholder="Солонгос үг (가방)" class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none" required>
+                    <input type="text" v-model="newPronunciation" placeholder="Дуудлага (Кабанг)" class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none">
+                    <input type="text" v-model="newMongolian" placeholder="Монгол утга (Цүнх)" class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none" required>
+                    <button type="submit" class="md:col-span-3 bg-rose-600 hover:bg-rose-500 text-white py-2.5 rounded-xl font-bold transition">Нэмэх</button>
+                </form>
+            </div>
+
+            <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
+                <div class="p-4 border-b border-slate-700 font-bold text-slate-300 flex justify-between items-center">
+                    <span>TOPIK 1 Үгсийн санал (Нийт: {{ words.length }})</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 max-h-[600px] overflow-y-auto">
+                    <div v-for="w in words" :key="w.id" class="bg-slate-900 p-4 rounded-xl border border-slate-700/70 flex justify-between items-start">
+                        <div>
+                            <div class="text-2xl font-bold text-rose-300 mb-1">{{ w.korean }}</div>
+                            <div class="text-xs text-slate-400 mb-2">[{{ w.pronunciation }}]</div>
+                            <div class="text-slate-200 font-medium">{{ w.mongolian }}</div>
+                        </div>
+                        <button @click="deleteWord(w.id)" class="text-slate-600 hover:text-rose-400 p-1"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: TOPIK 1 GRAMMAR -->
+        <!-- ========================================== -->
+        <div v-if="activeTab === 'topik_grammar'">
+            <h2 class="text-xl font-bold text-rose-300 mb-6"><i class="fa-solid fa-book-bookmark"></i> TOPIK 1 Үндсэн Дүрмүүд</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div v-for="g in grammarList" :key="g.id" class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg">
+                    <div class="text-xl font-bold text-rose-400 mb-2">{{ g.title }}</div>
+                    <p class="text-slate-300 text-sm mb-4">{{ g.meaning }}</p>
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-700/60">
+                        <span class="text-xs text-slate-400 uppercase font-bold">Жишээ:</span>
+                        <div class="text-rose-300 font-bold text-base mt-1">{{ g.exampleKr }}</div>
+                        <div class="text-slate-300 text-sm mt-0.5">{{ g.exampleMn }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 4: TOPIK 1 QUIZ -->
+        <!-- ========================================== -->
+        <div v-if="activeTab === 'topik_quiz'" class="max-w-2xl mx-auto">
+            <div v-if="quizFinished" class="bg-slate-800 p-8 rounded-2xl border border-slate-700 text-center">
+                <i class="fa-solid fa-trophy text-5xl text-amber-400 mb-4"></i>
+                <h2 class="text-2xl font-bold mb-2">Шалгалт дууслаа!</h2>
+                <p class="text-lg text-slate-300 mb-6">Таны оноо: <span class="text-rose-400 font-bold text-2xl">{{ quizScore }}</span> / {{ quizTotal }}</p>
+                <button @click="startQuiz" class="bg-rose-600 text-white px-8 py-3 rounded-xl font-bold">Дахин ажиллах</button>
+            </div>
+            <div v-else class="bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-xl">
+                <div class="flex justify-between items-center mb-6 text-slate-400 text-sm">
+                    <span>Асуулт: {{ currentQuestionIndex + 1 }} / {{ quizTotal }}</span>
+                    <span>Оноо: {{ quizScore }}</span>
+                </div>
+                <div class="bg-slate-900 p-8 rounded-2xl border border-slate-700 text-center mb-6">
+                    <div class="text-4xl font-extrabold text-rose-400 mb-2">{{ currentQuestion.korean }}</div>
+                    <div class="text-slate-400 text-sm">[{{ currentQuestion.pronunciation }}]</div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button v-for="(option, idx) in currentOptions" :key="idx" @click="selectOption(option)" :disabled="selectedOption !== null" :class="getOptionClass(option)" class="p-4 rounded-xl font-bold border text-left transition">
+                        <span>{{ option }}</span>
+                    </button>
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <button v-if="selectedOption !== null" @click="nextQuestion" class="bg-rose-600 text-white px-6 py-2.5 rounded-xl font-bold">Дараагийнх <i class="fa-solid fa-arrow-right ml-2"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 5: STUDY TIMER (ПОМОДОРО) -->
+        <!-- ========================================== -->
+        <div v-if="activeTab === 'timer'" class="max-w-md mx-auto text-center">
+            <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-xl">
+                <h2 class="text-xl font-bold text-amber-400 mb-6"><i class="fa-solid fa-stopwatch"></i> Хичээл Төвлөрөх Таймер</h2>
+                <div class="text-6xl font-extrabold text-white mb-8 tracking-wider">{{ formatTime }}</div>
+                <div class="flex justify-center gap-4">
+                    <button @click="toggleTimer" class="px-8 py-3 rounded-2xl font-bold text-white transition" :class="isTimerRunning ? 'bg-rose-600 hover:bg-rose-500' : 'bg-emerald-600 hover:bg-emerald-500'">
+                        {{ isTimerRunning ? 'Зогсоох' : 'Эхлүүлэх' }}
+                    </button>
+                    <button @click="resetTimer" class="bg-slate-700 hover:bg-slate-600 text-slate-300 px-6 py-3 rounded-2xl font-bold transition">
+                        Шинэчлэх
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    activeTab: 'tracker',
+                    selectedMonth: new Date().toISOString().slice(0, 7),
+                    daysInMonth: 30,
+                    newHabitTitle: '',
+                    newHabitCategory: '📚 Хичээл/Ажил',
+                    schedule: { wakeTime: '07:00', sleepTime: '23:00' },
+                    habits: [],
+                    logs: {},
+
+                    // TOPIK Data
+                    newKorean: '', newPronunciation: '', newMongolian: '',
+                    words: [],
+                    grammarList: [
+                        { id: 1, title: 'N+입니다 / 입니까?', meaning: 'Мөн үү? / Мөн (Нэр үгэн дээр залгана)', exampleKr: '저는 학생입니다.', exampleMn: 'Би бол сурагч мөн.' },
+                        { id: 2, title: 'V/A+-아/어/해요', meaning: 'Одоо цагийн энгийн хүндэтгэлийн хэлбэр', exampleKr: '우유를 마셔요.', exampleMn: 'Сүү ууж байна.' },
+                        { id: 3, title: 'N+이/가', meaning: 'Нэрлэхийн тийн ялгал (Субъект)', exampleKr: '날씨가 좋습니다.', exampleMn: 'Цаг агаар сайн байна.' },
+                        { id: 4, title: 'N+을/를', meaning: 'Заахын тийн ялгал (Объект)', exampleKr: '밥을 먹어요.', exampleMn: 'Хоол идэж байна.' },
+                        { id: 5, title: 'V+-고 싶다', meaning: 'Хүсэж байна (-маар/меэр байна)', exampleKr: '한국에 가고 싶어요.', exampleMn: 'Солонгос явмаар байна.' },
+                        { id: 6, title: 'N+에 가다/오다', meaning: 'Чиглэл (-руу/-даа явах)', exampleKr: '학교에 가요.', exampleMn: 'Сургууль руу явна.' }
+                    ],
+                    quizQuestions: [], currentQuestionIndex: 0, quizScore: 0, quizTotal: 5, currentOptions: [], selectedOption: null, quizFinished: false,
+
+                    // Timer Data
+                    timerTime: 1500, // 25 min
+                    isTimerRunning: false,
+                    timerInterval: null
+                }
+            },
+            computed: {
+                currentQuestion() { return this.quizQuestions[this.currentQuestionIndex] || {}; },
+                formatTime() {
+                    const mins = Math.floor(this.timerTime / 60);
+                    const secs = this.timerTime % 60;
+                    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                }
+            },
+            mounted() {
+                this.loadData();
+                this.generateDays();
+            },
+            methods: {
+                generateDays() {
+                    const [year, month] = this.selectedMonth.split('-');
+                    this.daysInMonth = new Date(year, month, 0).getDate();
+                },
+                addHabit() {
+                    if (!this.newHabitTitle.trim()) return;
+                    this.habits.push({ id: Date.now(), title: this.newHabitTitle, category: this.newHabitCategory });
+                    this.newHabitTitle = '';
+                    this.saveHabits();
+                },
+                deleteHabit(id) {
+                    if (confirm('Устгах уу?')) {
+                        this.habits = this.habits.filter(h => h.id !== id);
+                        this.saveHabits();
+                    }
+                },
+                getLogKey(habitId, day) { return `${this.selectedMonth}-${String(day).padStart(2, '0')}_${habitId}`; },
+                toggleCheck(habitId, day) {
+                    const key = this.getLogKey(habitId, day);
+                    this.logs[key] = !this.logs[key];
+                    this.saveLogs();
+                },
+                isChecked(habitId, day) { return !!this.logs[this.getLogKey(habitId, day)]; },
+                getHabitProgress(habitId) {
+                    let count = 0;
+                    for (let day = 1; day <= this.daysInMonth; day++) { if (this.isChecked(habitId, day)) count++; }
+                    return Math.round((count / this.daysInMonth) * 100) || 0;
+                },
+                saveHabits() { localStorage.setItem('big_habits', JSON.stringify(this.habits)); },
+                saveLogs() { localStorage.setItem('big_logs', JSON.stringify(this.logs)); },
+                saveSchedule() { localStorage.setItem('big_schedule', JSON.stringify(this.schedule)); },
+
+                // TOPIK
+                addWord() {
+                    if (!this.newKorean.trim() || !this.newMongolian.trim()) return;
+                    this.words.unshift({ id: Date.now(), korean: this.newKorean.trim(), pronunciation: this.newPronunciation.trim() || '...', mongolian: this.newMongolian.trim() });
+                    this.newKorean = ''; this.newPronunciation = ''; this.newMongolian = '';
+                    this.saveWords();
+                },
+                deleteWord(id) {
+                    if (confirm('Үгийг устгах уу?')) {
+                        this.words = this.words.filter(w => w.id !== id);
+                        this.saveWords();
+                    }
+                },
+                saveWords() { localStorage.setItem('big_words', JSON.stringify(this.words)); },
+                startQuiz() {
+                    this.activeTab = 'topik_quiz';
+                    if (this.words.length < 4) return;
+                    const shuffled = [...this.words].sort(() => 0.5 - Math.random());
+                    this.quizQuestions = shuffled.slice(0, Math.min(5, this.words.length));
+                    this.quizTotal = this.quizQuestions.length;
+                    this.currentQuestionIndex = 0; this.quizScore = 0; this.quizFinished = false;
+                    this.loadOptions();
+                },
+                loadOptions() {
+                    this.selectedOption = null;
+                    const correct = this.currentQuestion.mongolian;
+                    const otherWords = this.words.filter(w => w.mongolian !== correct);
+                    const shuffledOthers = [...otherWords].sort(() => 0.5 - Math.random()).slice(0, 3);
+                    this.currentOptions = [correct, ...shuffledOthers.map(w => w.mongolian)].sort(() => 0.5 - Math.random());
+                },
+                selectOption(option) {
+                    if (this.selectedOption !== null) return;
+                    this.selectedOption = option;
+                    if (option === this.currentQuestion.mongolian) this.quizScore++;
+                },
+                getOptionClass(option) {
+                    if (this.selectedOption === null) return 'bg-slate-900 border-slate-700 hover:border-rose-500 text-slate-200';
+                    if (option === this.currentQuestion.mongolian) return 'bg-emerald-500/20 border-emerald-500 text-emerald-300';
+                    if (option === this.selectedOption) return 'bg-rose-500/20 border-rose-500 text-rose-300';
+                    return 'bg-slate-900/50 border-slate-800 text-slate-500';
+                },
+                nextQuestion() {
+                    if (this.currentQuestionIndex + 1 < this.quizTotal) {
+                        this.currentQuestionIndex++;
+                        this.loadOptions();
+                    } else { this.quizFinished = true; }
+                },
+
+                // Timer
+                toggleTimer() {
+                    if (this.isTimerRunning) {
+                        clearInterval(this.timerInterval);
+                        this.isTimerRunning = false;
+                    } else {
+                        this.isTimerRunning = true;
+                        this.timerInterval = setInterval(() => {
+                            if (this.timerTime > 0) this.timerTime--;
+                            else { clearInterval(this.timerInterval); this.isTimerRunning = false; alert('Таймер дууслаа!'); }
+                        }, 1000);
+                    }
+                },
+                resetTimer() {
+                    clearInterval(this.timerInterval);
+                    this.isTimerRunning = false;
+                    this.timerTime = 1500;
+                },
+
+                // DATA
+                loadData() {
+                    const savedHabits = localStorage.getItem('big_habits');
+                    const savedLogs = localStorage.getItem('big_logs');
+                    const savedWords = localStorage.getItem('big_words');
+
+                    if (savedHabits) this.habits = JSON.parse(savedHabits);
+                    else {
+                        this.habits = [
+                            { id: 1, title: '📖 TOPIK 1 үг цээжлэх', category: '📚 Хичээл/Ажил' },
+                            { id: 2, title: '📱 Утас ашиглахгүй байх', category: '📱 Утасны хэрэглээ' }
+                        ];
+                    }
+                    if (savedLogs) this.logs = JSON.parse(savedLogs);
+
+                    if (savedWords) this.words = JSON.parse(savedWords);
+                    else {
+                        this.words = [
+                            { id: 1, korean: '학교', pronunciation: 'Хакгё', mongolian: 'Сургууль' },
+                            { id: 2, korean: '선생님', pronunciation: 'Сонсэнгним', mongolian: 'Багш' },
+                            { id: 3, korean: '친구', pronunciation: 'Чингү', mongolian: 'Найз' },
+                            { id: 4, korean: '한국어', pronunciation: 'Хангүго', mongolian: 'Солонгос хэл' }
+                        ];
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
